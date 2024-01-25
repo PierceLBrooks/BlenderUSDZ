@@ -170,7 +170,7 @@ def getValueTypeFromStr(typeStr):
         return ValueType.vec3d
     if typeStr == 'double4':
         return ValueType.vec4d
-    return ValueType[typeStr]
+    return None
 
 def valueToString(value, reduced = False):
     if type(value) is str:
@@ -204,8 +204,9 @@ def dictionaryToString(dic, space):
             ret += '1\n' if value else '0\n'
         else:
             valueType = getValueType(value)
-            ret += indent + valueType.toString() + ' ' + key + ' = '
-            ret += valueToString(value) + '\n'
+            if valueType != None:
+                ret += indent + valueType.toString() + ' ' + key + ' = '
+                ret += valueToString(value) + '\n'
     return ret + space + '}\n'
 
 def propertyToString(prop, space):
@@ -309,6 +310,8 @@ class UsdAttribute:
     def valueTypeToString(self):
         if self.valueTypeStr != None:
             return self.valueTypeStr + ('[]' if self.isArray() else '')
+        if self.valueType == None:
+            return ''
         return self.valueType.toString() + ('[]' if self.isArray() else '')
 
     def isArray(self):

@@ -238,9 +238,24 @@ def addArmatureAnimation(arm, animation):
             #bone.location = mathutils.Vector(location[i]) - head
             bone.keyframe_insert(data_path = 'location', frame = frame, group = animation.name)
         for frame, rotation in rotations:
-            bone.rotation_quaternion = rotation[i][3:] + rotation[i][:3]
+            if "dict" in str(type(rotation)):
+                if not i in rotation:
+                    continue
+            elif "list" in str(type(rotation)):
+                if i >= len(rotation):
+                    continue
+            rotation = rotation[i]
+            if len(rotation) < 4:
+                continue
+            bone.rotation_quaternion = rotation[3:] + rotation[:3]
             bone.keyframe_insert(data_path = 'rotation_quaternion', frame = frame, group = animation.name)
         for frame, scale in scales:
+            if "dict" in str(type(scale)):
+                if not i in scale:
+                    continue
+            elif "list" in str(type(scale)):
+                if i >= len(scale):
+                    continue
             bone.scale = scale[i]
             bone.keyframe_insert(data_path = 'scale', frame = frame, group = animation.name)
     bpy.ops.object.mode_set(mode='OBJECT',toggle=True)
@@ -535,6 +550,8 @@ def getImageTextureNode(data, usdTexture):
         return data['textureNodes'][usdTexture.name]
     # Get the Image File Path
     filePath = data['tempDir'] + usdTexture['inputs:file'].value
+    if not os.path.exists(filePath):
+        return None
     posY = data['shaderNode'].location.y - len(data['textureNodes']) * 300.0
     # Add an Image Texture Node
     texNode = data['material'].node_tree.nodes.new('ShaderNodeTexImage')
@@ -574,6 +591,8 @@ def setShaderInputTexture(data, inputData, inputName):
     input = getBpyNodeInput(data['shaderNode'], inputName)
     if input != None:
         texNode = getImageTextureNode(data, inputData.value.parent)
+        if texNode == None:
+            return
         mat = data['material']
         if input.type == 'RGBA':
             # Connect to the Color Input

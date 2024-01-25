@@ -363,6 +363,8 @@ class CrateFile:
     def addFieldTimeSamples(self, field, data, vType):
         field = self.getTokenIndex(field)
         vType = getValueTypeFromStr(vType)
+        if vType == None:
+            return None
         count = len(data)
         size = 8*(count+2)
         elem = 0
@@ -586,7 +588,9 @@ class CrateFile:
         if usdAtt.value != None:
             fset.append(self.addField('default', usdAtt.value, usdAtt.valueType))
         if usdAtt.hasTimeSamples():
-            fset.append(self.addFieldTimeSamples('timeSamples', usdAtt.frames, usdAtt.valueType.name))
+            timeSamples = self.addFieldTimeSamples('timeSamples', usdAtt.frames, usdAtt.valueType.name)
+            if timeSamples != None:
+                fset.append(timeSamples)
         fset = self.addFieldSet(fset)
         usdAtt.pathIndex = self.addSpec(fset, SpecType.Attribute)
         nameToken = self.getTokenIndex(usdAtt.name)
@@ -708,16 +712,17 @@ class CrateFile:
             if valueType == ValueType.asset and type(value) == str:
                 value = value.replace('@', '')
             att = parent.createAttribute(name, value, valueType)
-            att.pathIndex = path
-            if att.valueType.name != valueTypeStr:
-                att.valueTypeStr = valueTypeStr
-            if 'variability' in metadata and metadata.pop('variability') == 1:
-                att.addQualifier('uniform')
-            if 'custom' in metadata and metadata.pop('custom') == 1:
-                att.addQualifier('custom')
-            if 'timeSamples' in metadata:
-                att.frames = metadata.pop('timeSamples')
-            att.metadata = metadata
+            if att != None:
+                att.pathIndex = path
+                if att.valueType != None and att.valueType.name != valueTypeStr:
+                    att.valueTypeStr = valueTypeStr
+                if 'variability' in metadata and metadata.pop('variability') == 1:
+                    att.addQualifier('uniform')
+                if 'custom' in metadata and metadata.pop('custom') == 1:
+                    att.addQualifier('custom')
+                if 'timeSamples' in metadata:
+                    att.frames = metadata.pop('timeSamples')
+                att.metadata = metadata
         elif specType == SpecType.Relationship:
             rel = parent.createAttribute(name)
             rel.pathIndex = path
